@@ -236,6 +236,23 @@ describe("handle verification and Codeforces history", () => {
     await expect(new Codeforces(env.DB, transport, async () => {}).canonicalHandle("tourist")).rejects.toThrow("busy");
     expect(transport).toHaveBeenCalledTimes(1);
   });
+
+  it("logs Codeforces transport failures without exposing the requested handle", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const transport = vi.fn().mockRejectedValue(
+      new Error("Failed to fetch https://codeforces.com/api/user.info?handles=privateHandle"),
+    );
+    await expect(new Codeforces(env.DB, transport).canonicalHandle("tourist")).rejects.toThrow("could not be reached");
+    expect(log).toHaveBeenCalledWith("Codeforces transport failure:", "Error: Failed to fetch [URL]");
+  });
+
+  it("calls the fetch transport with the Workers global receiver", async () => {
+    const transport = vi.fn(function (this: unknown) {
+      if (this !== globalThis) throw new TypeError("Illegal invocation");
+      return Promise.resolve(Response.json({ status: "OK", result: [{ handle: "tourist" }] }));
+    });
+    expect(await new Codeforces(env.DB, transport).canonicalHandle("tourist")).toBe("tourist");
+  });
 });
 
 function button(customId: string, userId = "10", guildId = "1"): Interaction {

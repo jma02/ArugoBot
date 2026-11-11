@@ -13,7 +13,7 @@
     {
       "binding": "DB",
       "database_name": "arugobot",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "da6e1a75-ae7b-4c8d-aa6e-39aa1c8ebe91",
       "migrations_dir": "migrations"
     }
   ],

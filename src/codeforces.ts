@@ -31,10 +31,14 @@ export class Codeforces {
     const query = new URLSearchParams(Object.entries(parameters).map(([key, value]) => [key, String(value)]));
     let response: Response;
     try {
-      response = await this.transport(`https://codeforces.com/api/${endpoint}?${query}`, {
+      response = await this.transport.call(globalThis, `https://codeforces.com/api/${endpoint}?${query}`, {
         signal: AbortSignal.timeout(8_000),
       });
-    } catch {
+    } catch (error) {
+      const detail = error instanceof Error
+        ? `${error.name}: ${error.message.replace(/https?:\/\/\S+/g, "[URL]").slice(0, 200)}`
+        : "Unknown transport error";
+      console.error("Codeforces transport failure:", detail);
       throw new CodeforcesError("Codeforces could not be reached. Please try again shortly.");
     }
     if (response.status === 429) {

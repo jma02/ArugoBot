@@ -38,8 +38,8 @@ const output = new Writable({
 });
 const prompt = createInterface({ input: process.stdin, output, terminal: Boolean(process.stdin.isTTY), historySize: 0 });
 try {
-  if (binding.database_id === "00000000-0000-0000-0000-000000000000") {
-    const databases = JSON.parse(run(["d1", "list", "--json"], { capture: true })) as { uuid: string; name: string }[];
+  const databases = JSON.parse(run(["d1", "list", "--json"], { capture: true })) as { uuid: string; name: string }[];
+  if (!databases.some((entry) => entry.uuid === binding.database_id)) {
     const existing = databases.find((entry) => entry.name === binding.database_name);
     if (existing) {
       const answer = await prompt.question(`A D1 database named ${binding.database_name} already exists. Reuse it? [y/N] `);
