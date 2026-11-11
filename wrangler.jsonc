@@ -1,0 +1,33 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "arugobot",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "arugobot",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "triggers": { "crons": ["* * * * *"] },
+  "queues": {
+    "producers": [{ "binding": "JOBS", "queue": "arugobot-jobs" }],
+    "consumers": [{
+      "queue": "arugobot-jobs",
+      "max_batch_size": 1,
+      "max_batch_timeout": 1,
+      "max_concurrency": 1,
+      "max_retries": 3,
+      "retry_delay": 30
+    }]
+  },
+  "observability": { "enabled": true }
+}

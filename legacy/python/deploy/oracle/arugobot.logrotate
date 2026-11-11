@@ -1,0 +1,11 @@
+/home/ubuntu/ArugoBot/bot.log {
+    su ubuntu ubuntu
+    weekly
+    maxsize 10M
+    rotate 4
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+}

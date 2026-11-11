@@ -1,0 +1,6 @@
+# Copy to .dev.vars for local development. Never commit real credentials.
+DISCORD_APPLICATION_ID=
+DISCORD_PUBLIC_KEY=
+DISCORD_BOT_TOKEN=
+# Optional: register commands in one test server instead of globally.
+DISCORD_GUILD_ID=

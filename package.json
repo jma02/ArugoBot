@@ -1,0 +1,29 @@
+{
+  "name": "arugobot",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "ArugoBot: serverless Codeforces challenges for Discord.",
+  "license": "MIT",
+  "engines": { "node": ">=24.0.0" },
+  "scripts": {
+    "dev": "wrangler dev --test-scheduled",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
+    "test": "vitest run",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "deploy": "wrangler deploy",
+    "db:local": "wrangler d1 migrations apply DB --local",
+    "db:remote": "wrangler d1 migrations apply DB --remote",
+    "refresh:problems": "node scripts/refresh-problems.ts",
+    "register:commands": "node --env-file-if-exists=.dev.vars scripts/register-commands.ts",
+    "setup": "node scripts/setup.ts"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "1.7.0",
+    "@cloudflare/workers-types": "5.20261110.1",
+    "@types/node": "^24.10.0",
+    "typescript": "7.0.2",
+    "vitest": "5.1.0",
+    "wrangler": "4.160.0"
+  }
+}
