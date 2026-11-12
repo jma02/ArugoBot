@@ -32,42 +32,124 @@ verified is voided rather than treated as a loss.
 
 ## Deploy
 
-You need Node.js **24+**, a Cloudflare account, and a Discord application named
-**ArugoBot**. Keep the Cloudflare account on the **Workers Free** plan for a $0
-deployment within the free limits described below.
+This is a one-time setup; your computer does not need to stay on afterward.
+You need **Git**, **Node.js 24 or newer** (with npm), a
+[Cloudflare account](https://dash.cloudflare.com/sign-up) on the **Workers Free**
+plan, and a Discord account that can add a bot to a server. You also need a
+Codeforces account to try `/register`. The free services have usage limits
+described below.
 
-1. In the [Discord Developer Portal](https://discord.com/developers/applications),
-   create an application named **ArugoBot**. From **General Information**, get
-   its Application ID and Public Key. From **Bot**, generate its **bot token**.
-   Message Content Intent is not required.
-2. Clone this fork and install its development tools:
+**No Codeforces API key or token is required.** ArugoBot uses public
+[Codeforces API methods](https://codeforces.com/apiHelp); account ownership is
+verified by a Codeforces submission, not by sharing credentials.
 
-   ```bash
-   git clone https://github.com/jma02/ArugoBot.git
-   cd ArugoBot
-   npm ci
-   npm run setup
+### 1. Create your Discord bot
+
+1. Open the [Discord Developer Portal](https://discord.com/developers/applications).
+   Select **New Application**, name it **ArugoBot**, and create it.
+2. On **General Information**, copy the **Application ID** and **Public Key**.
+   You will enter both during setup. The Public Key is *not* the Client Secret.
+3. On **Bot**, select **Reset Token** to generate a **bot token** and copy it.
+   Discord may ask you to confirm your identity. Keep this token private:
+   never use your personal Discord user token or commit the bot token to Git.
+   If reusing an existing bot, resetting its token also invalidates the
+   old token in any running deployment.
+
+You do **not** need to enable Message Content or other privileged Gateway
+intents. This version receives slash commands over HTTP.
+
+### 2. Install ArugoBot
+
+Install [Node.js 24+](https://nodejs.org/en/download) and
+[Git](https://git-scm.com/downloads) if necessary. Check the Node version,
+then clone the fork:
+
+```bash
+node --version
+git clone https://github.com/jma02/ArugoBot.git
+cd ArugoBot
+npm ci
+```
+
+`node --version` should print `v24` or higher. Run the following commands
+from the `ArugoBot` directory.
+
+### 3. Deploy to Cloudflare
+
+```bash
+npm run setup
+```
+
+Follow the prompts:
+
+1. Wrangler opens your browser for Cloudflare login. Authorize it for the
+   account where you want to host ArugoBot.
+2. Enter the Discord **Application ID**, **Public Key**, and **bot token** from
+   step 1 when prompted. The token prompt hides what you type.
+3. If this is your first Worker, choose an available `workers.dev` subdomain
+   and confirm it. Keep the Worker URL printed by Wrangler, for example
+   `https://arugobot.your-subdomain.workers.dev`.
+
+Setup creates or reuses the D1 database and job queue, applies migrations,
+deploys the Worker, uploads the problem catalog, stores the Discord values as
+Cloudflare secrets, and registers the slash commands. You do not need a
+`.dev.vars` file for this step; that file is only for local development or
+manual command registration. **Do not paste your bot token into chat or GitHub.**
+
+If your Cloudflare login has multiple accounts, set `CLOUDFLARE_ACCOUNT_ID`
+to the account you want *before* running setup. The script checks whether the
+configured D1 database belongs to that account and updates `wrangler.jsonc`
+with your own database ID if needed. This ID is not a secret; the bot token
+and Cloudflare login credentials are never written to the repository.
+
+### 4. Connect Discord to the Worker
+
+Open **General Information** for *your* Discord application. Paste your
+Worker URL with `/interactions` appended into **Interactions Endpoint URL**,
+then save it. For example, if you chose `your-subdomain`:
+
+```text
+https://arugobot.your-subdomain.workers.dev/interactions
+```
+
+Replace `your-subdomain` with the one Wrangler printed. Do not paste the
+example unchanged or omit `/interactions`. Discord sends a signed test request
+when you save; if it rejects the URL, check the URL, Public Key, and deployed
+Worker. Opening your Worker URL with `/healthz` in a browser should show
+`"status":"ok"`, but `/ping` in Discord is the actual bot test.
+
+### 5. Invite and test the bot
+
+1. Open the **invite link printed by setup**. Choose a server where you can
+   manage bots. Use your new bot's link, not the original author's bot invite.
+2. Let ArugoBot **View Channels**, **Send Messages**, **Embed Links**, and
+   **Attach Files** in the channel where you will use it. If using threads,
+   also allow **Send Messages in Threads**.
+3. In that channel, run `/ping` (expect `Pong!`) and `/help`. Global commands
+   may take a little time to appear after registration.
+4. Run `/register` and enter *your* Codeforces handle. ArugoBot posts a
+   problem link and gives you **60 seconds** to submit a compilation error.
+   Log in to the same Codeforces handle, open that exact problem, choose
+   **GNU C++17 or C++20**, and submit:
+
+   ```cpp
+   #error ArugoBot verification
    ```
 
-3. The setup command opens Cloudflare's login, creates/reuses the D1 database,
-   creates the job queue, applies the schema, deploys the Worker, stores the
-   Discord credentials as Cloudflare secrets, and registers the slash commands.
-   The bot token is entered at a hidden prompt; it is not saved in the repository.
-4. Copy the printed **Interactions Endpoint URL** into your Discord application's
-   **General Information → Interactions Endpoint URL**, and save it.
-5. Use the printed invite link to add ArugoBot to your server. Check its channel
-   permissions: **View Channels, Send Messages, Embed Links, Attach Files**.
-   Add **Send Messages in Threads** if you will use it in threads.
-6. Run `/ping`, `/help`, and `/register` in your server. Global command changes
-   can take a little time to appear.
+   Once Codeforces shows **Compilation error**, press **Check submission** on
+   the Discord message. The error is intentional: it proves you control the
+   handle. If you miss the window, run `/register` again. If it still links to
+   the old attempt, press **Check submission** once to close that attempt,
+   then retry `/register`.
+5. Try `/rating` to see your starting rating and graph, or `/suggest` with a
+   rating such as `1500`. Once everyone has linked a handle, try `/challenge`
+   with a problem rating like `1500` and a duration like `40` minutes.
+   All participants must press **Ready** within 30 seconds.
 
-The bot can appear **offline in the member list** because it does not maintain
-a Discord Gateway connection. Its slash commands and buttons still work.
-
-If your Cloudflare login has access to multiple accounts, set
-`CLOUDFLARE_ACCOUNT_ID` to the intended account before running setup. The setup
-updates the public D1 database identifier in `wrangler.jsonc`; it does not store
-your bot token or Cloudflare OAuth token there.
+Large Codeforces histories can take a few minutes to import before suggestions
+and challenges are ready. The bot may appear **offline in the member list**:
+it does not keep a Gateway connection open, but its slash commands and buttons
+still work.
 
 ### Manual deployment
 
