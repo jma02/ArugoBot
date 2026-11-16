@@ -1,4 +1,4 @@
-import { Catalog, sample } from "./catalog";
+import { Catalog, sampleRecentProblems } from "./catalog";
 import { ratingChart } from "./chart";
 import {
   cancelWaiting, checkParticipant, createChallenge, publishChallenge, resolveParticipant, setReady,
@@ -165,7 +165,7 @@ async function runCommand(env: Env, discord: Discord, cf: Codeforces, interactio
       const catalog = new Catalog(env.ASSETS);
       if (!isChallenge) {
         const rating = Number(option(interaction, "rating"));
-        const choices = sample((await catalog.bucket(rating)).filter((problem) => !solved.has(problem.id)), 10);
+        const choices = sampleRecentProblems((await catalog.bucket(rating)).filter((problem) => !solved.has(problem.id)), 10);
         await discord.response(interaction, {
           embeds: [{
             title: `Problem suggestions · ${rating}`,
@@ -183,7 +183,7 @@ async function runCommand(env: Env, discord: Discord, cf: Codeforces, interactio
         .all<{ problem_id: string }>()).results.map((entry) => entry.problem_id));
       const input = String(option(interaction, "problem") ?? "").trim().toUpperCase();
       const problem = /^\d+$/.test(input)
-        ? sample((await catalog.bucket(Number(input))).filter((entry) => !solved.has(entry.id) && !prior.has(entry.id)), 1)[0]
+        ? sampleRecentProblems((await catalog.bucket(Number(input))).filter((entry) => !solved.has(entry.id) && !prior.has(entry.id)), 1)[0]
         : await catalog.problem(input);
       if (!problem) throw new UserError("No eligible problem was found at that rating. Try another rating.");
       if (solved.has(problem.id)) throw new UserError("Someone has already solved that problem on Codeforces.");

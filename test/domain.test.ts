@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import { describe, expect, it } from "vitest";
-import { Catalog, sample } from "../src/catalog";
+import { Catalog, sample, sampleRecentProblems } from "../src/catalog";
 import { ratingChart } from "../src/chart";
 import { COMMANDS } from "../src/command-schema";
 import { ratingChanges } from "../src/rating";
@@ -61,6 +61,31 @@ it("samples small suggestion pools without duplicates or mutating the source", (
   expect(sample(original, 10).sort()).toEqual(original);
   expect(original).toEqual(["a", "b", "c"]);
   expect(sample([], 10)).toEqual([]);
+});
+
+it("favors newer contests without excluding old eligible problems", () => {
+  const problems = Array.from({ length: 100 }, (_, index) => ({
+    id: `${index + 1}A`, contestId: index + 1, index: "A",
+    name: `Problem ${index + 1}`, rating: 1500,
+  }));
+  const original = problems.slice();
+  const chosen = sampleRecentProblems(problems, 10);
+  expect(chosen).toHaveLength(10);
+  expect(new Set(chosen.map((problem) => problem.id)).size).toBe(10);
+  expect(problems).toEqual(original);
+  expect(sampleRecentProblems([], 10)).toEqual([]);
+  expect(sampleRecentProblems(problems, 0)).toEqual([]);
+  expect(sampleRecentProblems(problems.slice(0, 3), 10)).toHaveLength(3);
+
+  let newest = 0;
+  let oldest = 0;
+  for (let trial = 0; trial < 1500; trial++) {
+    const contestId = sampleRecentProblems(problems, 1)[0]!.contestId;
+    if (contestId >= 76) newest++;
+    if (contestId <= 25) oldest++;
+  }
+  expect(newest).toBeGreaterThan(oldest * 4);
+  expect(oldest).toBeGreaterThan(0);
 });
 
 it("registers all original features as guild slash commands", () => {

@@ -59,3 +59,31 @@ export function sample<T>(values: T[], count: number): T[] {
   }
   return chosen;
 }
+
+// Contest IDs approximately track publication order. Every problem keeps a
+// positive weight, so even the oldest eligible problems remain selectable.
+export function sampleRecentProblems(problems: Problem[], count: number): Problem[] {
+  if (count <= 0 || problems.length === 0) return [];
+
+  const pool = problems.slice();
+  const contestIds = pool.map((problem) => problem.contestId);
+  const oldest = Math.min(...contestIds);
+  const span = Math.max(...contestIds) - oldest;
+  const weights = pool.map((problem) => {
+    const recency = span ? (problem.contestId - oldest) / span : 0;
+    return 1 + Math.round(15 * recency * recency);
+  });
+  let totalWeight = weights.reduce((total, weight) => total + weight, 0);
+  const chosen: Problem[] = [];
+  while (chosen.length < count && pool.length) {
+    let ticket = randomIndex(totalWeight);
+    let index = 0;
+    while (index < weights.length - 1 && ticket >= weights[index]!) {
+      ticket -= weights[index]!;
+      index++;
+    }
+    chosen.push(pool.splice(index, 1)[0]!);
+    totalWeight -= weights.splice(index, 1)[0]!;
+  }
+  return chosen;
+}

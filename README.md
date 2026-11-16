@@ -20,6 +20,9 @@ buttons, a persistent D1 database, and short scheduled jobs.
 | `/unlink` | Confirm removal of your handle, rating, and history in this server |
 | `/ping`, `/help` | Check the bot and show help |
 
+Selecting a problem by rating with `/suggest` or `/challenge` favors newer
+Codeforces contests. Older eligible problems still have a chance to be selected.
+
 New users start at **1500**. Challenges last **40, 60, 80, 100, or 120 minutes**.
 Everyone has 30 seconds to confirm with the **Ready** button. Players can give
 up, check their result, or cancel without a rating change during a verified
