@@ -21,9 +21,9 @@ buttons, a persistent D1 database, and short scheduled jobs.
 | `/ping`, `/help` | Check the bot and show help |
 
 Selecting a problem by rating with `/suggest` or `/challenge` uses contest dates
-to favor problems from about two years ago. A Gaussian-shaped weight peaks at
-that age with a 1.5-year standard deviation; older and newer problems still
-have a nonzero chance.
+to favor the newest eligible contest. A Gaussian-shaped weight peaks there with
+a 1.5-year standard deviation. Older eligible problems still have a nonzero
+chance.
 Problem titles and linked Codeforces statements are requested in English.
 Problems without English titles are omitted from the selectable catalog.
 

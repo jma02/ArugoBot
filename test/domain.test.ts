@@ -74,12 +74,13 @@ it("samples small suggestion pools without duplicates or mutating the source", (
   expect(sample([], 10)).toEqual([]);
 });
 
-it("favors contests about two years old without excluding others", () => {
+it("centers on the newest eligible contest, even if it is years old", () => {
   const yearSeconds = 365.25 * 24 * 60 * 60;
-  const ages = [0, 1, 2, 3, 5, 8];
-  const problems = ages.map((age, index) => ({
+  const yearsBeforeNewest = [0, 1, 2, 3, 5, 8];
+  const newest = Date.now() / 1000 - 5 * yearSeconds;
+  const problems = yearsBeforeNewest.map((years, index) => ({
     id: `${index + 1}A`, contestId: index + 1,
-    contestStartTimeSeconds: Math.floor(Date.now() / 1000 - age * yearSeconds),
+    contestStartTimeSeconds: Math.floor(newest - years * yearSeconds),
     index: "A", name: `Problem ${index + 1}`, rating: 1500,
   }));
   const original = problems.slice();
@@ -91,14 +92,13 @@ it("favors contests about two years old without excluding others", () => {
   expect(sampleRecentProblems(problems, 0)).toEqual([]);
   expect(sampleRecentProblems(problems.slice(0, 3), 10)).toHaveLength(3);
 
-  const counts = Array<number>(ages.length).fill(0);
+  const counts = Array<number>(yearsBeforeNewest.length).fill(0);
   for (let trial = 0; trial < 5000; trial++) {
     counts[sampleRecentProblems(problems, 1)[0]!.contestId - 1]!++;
   }
-  expect(counts[2]).toBeGreaterThan(counts[1]!);
-  expect(counts[2]).toBeGreaterThan(counts[3]!);
-  expect(counts[2]).toBeGreaterThan(counts[0]! * 1.5);
-  expect(counts[2]).toBeGreaterThan(counts[5]! * 20);
+  expect(counts[0]).toBeGreaterThan(counts[1]!);
+  expect(counts[0]).toBeGreaterThan(counts[2]! * 1.5);
+  expect(counts[0]).toBeGreaterThan(counts[5]! * 20);
   expect(counts[0]).toBeGreaterThan(0);
   expect(counts[5]).toBeGreaterThan(0);
 });

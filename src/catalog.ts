@@ -60,13 +60,13 @@ export function sample<T>(values: T[], count: number): T[] {
   return chosen;
 }
 
-// Favor contests from about two years ago without excluding older or newer ones.
+// Favor the newest eligible contest without excluding older ones.
 export function sampleRecentProblems(problems: Problem[], count: number): Problem[] {
   if (count <= 0 || problems.length === 0) return [];
 
   const pool = problems.slice();
   const year = 365.25 * 24 * 60 * 60 * 1000;
-  const target = Date.now() - 2 * year;
+  const target = Math.max(...pool.map((problem) => problem.contestStartTimeSeconds)) * 1000;
   const sigma = 1.5 * year;
   const weights = pool.map((problem) => {
     const distance = (problem.contestStartTimeSeconds * 1000 - target) / sigma;
