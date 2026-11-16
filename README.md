@@ -20,8 +20,10 @@ buttons, a persistent D1 database, and short scheduled jobs.
 | `/unlink` | Confirm removal of your handle, rating, and history in this server |
 | `/ping`, `/help` | Check the bot and show help |
 
-Selecting a problem by rating with `/suggest` or `/challenge` favors newer
-Codeforces contests. Older eligible problems still have a chance to be selected.
+Selecting a problem by rating with `/suggest` or `/challenge` uses contest dates
+to favor problems from about two years ago. A Gaussian-shaped weight peaks at
+that age with a 1.5-year standard deviation; older and newer problems still
+have a nonzero chance.
 Problem titles and linked Codeforces statements are requested in English.
 Problems without English titles are omitted from the selectable catalog.
 

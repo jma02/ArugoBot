@@ -19,6 +19,20 @@ const data = await response.json() as { status: string; result?: { problems: CFP
 if (data.status !== "OK" || !Array.isArray(data.result?.problems)) {
   throw new Error("Codeforces returned an invalid problem set; existing catalog was kept.");
 }
+// Codeforces limits API calls to one every two seconds.
+await new Promise((resolve) => setTimeout(resolve, 2100));
+const contestsResponse = await fetch("https://codeforces.com/api/contest.list?gym=false", {
+  signal: AbortSignal.timeout(30_000),
+});
+if (!contestsResponse.ok) throw new Error(`Codeforces returned HTTP ${contestsResponse.status}; existing catalog was kept.`);
+const contests = await contestsResponse.json() as {
+  status: string;
+  result?: { id: number; startTimeSeconds?: number }[];
+};
+if (contests.status !== "OK" || !Array.isArray(contests.result)) {
+  throw new Error("Codeforces returned an invalid contest list; existing catalog was kept.");
+}
+const contestStarts = new Map(contests.result.map((contest) => [contest.id, contest.startTimeSeconds]));
 const buckets: Record<string, Problem[]> = {};
 for (let rating = 800; rating <= 3500; rating += 100) buckets[rating] = [];
 const index: Record<string, number> = {};
@@ -26,9 +40,12 @@ for (const problem of data.result.problems) {
   if (!problem.contestId || !problem.rating || !buckets[problem.rating] || problem.tags.includes("*special")) continue;
   // Some problems still have Russian titles when Codeforces is asked for English.
   if (/\p{Script=Cyrillic}/u.test(problem.name)) continue;
+  const contestStartTimeSeconds = contestStarts.get(problem.contestId);
+  if (!contestStartTimeSeconds) continue;
   const id = `${problem.contestId}${problem.index}`;
   buckets[problem.rating]!.push({
-    id, contestId: problem.contestId, index: problem.index, name: problem.name, rating: problem.rating,
+    id, contestId: problem.contestId, contestStartTimeSeconds, index: problem.index,
+    name: problem.name, rating: problem.rating,
   });
   index[id] = problem.rating;
 }

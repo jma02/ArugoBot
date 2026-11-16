@@ -60,18 +60,17 @@ export function sample<T>(values: T[], count: number): T[] {
   return chosen;
 }
 
-// Contest IDs approximately track publication order. Every problem keeps a
-// positive weight, so even the oldest eligible problems remain selectable.
+// Favor contests from about two years ago without excluding older or newer ones.
 export function sampleRecentProblems(problems: Problem[], count: number): Problem[] {
   if (count <= 0 || problems.length === 0) return [];
 
   const pool = problems.slice();
-  const contestIds = pool.map((problem) => problem.contestId);
-  const oldest = Math.min(...contestIds);
-  const span = Math.max(...contestIds) - oldest;
+  const year = 365.25 * 24 * 60 * 60 * 1000;
+  const target = Date.now() - 2 * year;
+  const sigma = 1.5 * year;
   const weights = pool.map((problem) => {
-    const recency = span ? (problem.contestId - oldest) / span : 0;
-    return 1 + Math.round(15 * recency * recency);
+    const distance = (problem.contestStartTimeSeconds * 1000 - target) / sigma;
+    return 1 + Math.round(63 * Math.exp(-0.5 * distance * distance));
   });
   let totalWeight = weights.reduce((total, weight) => total + weight, 0);
   const chosen: Problem[] = [];

@@ -74,6 +74,7 @@ export interface Message {
 export interface Problem {
   id: string;
   contestId: number;
+  contestStartTimeSeconds: number;
   index: string;
   name: string;
   rating: number;

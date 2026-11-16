@@ -51,10 +51,12 @@ it("loads an actual problem from the bundled Codeforces catalog", async () => {
   const catalog = new Catalog(env.ASSETS);
   expect((await catalog.problem("1000a")).id).toBe("1000A");
   expect((await catalog.problem("4a")).name).toBe("Watermelon");
+  expect((await catalog.problem("4a")).contestStartTimeSeconds).toBe(1_268_395_200);
   expect(problemUrl("4A")).toBe("https://codeforces.com/problemset/problem/4/A?locale=en");
   const bucket = await catalog.bucket(1500);
   expect(bucket.length).toBeGreaterThan(10);
   expect(bucket.every((problem) => problem.rating === 1500)).toBe(true);
+  expect(bucket.every((problem) => Number.isInteger(problem.contestStartTimeSeconds))).toBe(true);
   await expect(catalog.bucket(1550)).rejects.toThrow("steps of 100");
   await expect(catalog.problem("not-a-problem")).rejects.toThrow("not in the catalog");
 });
@@ -72,29 +74,33 @@ it("samples small suggestion pools without duplicates or mutating the source", (
   expect(sample([], 10)).toEqual([]);
 });
 
-it("favors newer contests without excluding old eligible problems", () => {
-  const problems = Array.from({ length: 100 }, (_, index) => ({
-    id: `${index + 1}A`, contestId: index + 1, index: "A",
-    name: `Problem ${index + 1}`, rating: 1500,
+it("favors contests about two years old without excluding others", () => {
+  const yearSeconds = 365.25 * 24 * 60 * 60;
+  const ages = [0, 1, 2, 3, 5, 8];
+  const problems = ages.map((age, index) => ({
+    id: `${index + 1}A`, contestId: index + 1,
+    contestStartTimeSeconds: Math.floor(Date.now() / 1000 - age * yearSeconds),
+    index: "A", name: `Problem ${index + 1}`, rating: 1500,
   }));
   const original = problems.slice();
-  const chosen = sampleRecentProblems(problems, 10);
-  expect(chosen).toHaveLength(10);
-  expect(new Set(chosen.map((problem) => problem.id)).size).toBe(10);
+  const chosen = sampleRecentProblems(problems, 4);
+  expect(chosen).toHaveLength(4);
+  expect(new Set(chosen.map((problem) => problem.id)).size).toBe(4);
   expect(problems).toEqual(original);
   expect(sampleRecentProblems([], 10)).toEqual([]);
   expect(sampleRecentProblems(problems, 0)).toEqual([]);
   expect(sampleRecentProblems(problems.slice(0, 3), 10)).toHaveLength(3);
 
-  let newest = 0;
-  let oldest = 0;
-  for (let trial = 0; trial < 1500; trial++) {
-    const contestId = sampleRecentProblems(problems, 1)[0]!.contestId;
-    if (contestId >= 76) newest++;
-    if (contestId <= 25) oldest++;
+  const counts = Array<number>(ages.length).fill(0);
+  for (let trial = 0; trial < 5000; trial++) {
+    counts[sampleRecentProblems(problems, 1)[0]!.contestId - 1]!++;
   }
-  expect(newest).toBeGreaterThan(oldest * 4);
-  expect(oldest).toBeGreaterThan(0);
+  expect(counts[2]).toBeGreaterThan(counts[1]!);
+  expect(counts[2]).toBeGreaterThan(counts[3]!);
+  expect(counts[2]).toBeGreaterThan(counts[0]! * 1.5);
+  expect(counts[2]).toBeGreaterThan(counts[5]! * 20);
+  expect(counts[0]).toBeGreaterThan(0);
+  expect(counts[5]).toBeGreaterThan(0);
 });
 
 it("registers all original features as guild slash commands", () => {

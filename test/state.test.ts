@@ -11,7 +11,10 @@ import { checkRegistration, completeRegistration } from "../src/registration";
 import { consumeJobs, enqueueJobs, scheduledTick } from "../src/scheduler";
 import type { BackgroundJob, Challenge, Env, Interaction, QueuedJob, Registration, Submission, UserRow } from "../src/types";
 
-const problem = { id: "1000A", contestId: 1000, index: "A", name: "Codehorses T-shirts", rating: 1500 };
+const problem = {
+  id: "1000A", contestId: 1000, contestStartTimeSeconds: 1_530_110_100,
+  index: "A", name: "Codehorses T-shirts", rating: 1500,
+};
 const discord = () => {
   const client = new Discord(env);
   vi.spyOn(client, "send").mockResolvedValue({ id: "message-id" });
