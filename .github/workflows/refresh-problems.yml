@@ -6,7 +6,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: refresh-problems
+  group: arugobot-production
   cancel-in-progress: false
 jobs:
   refresh:
@@ -19,6 +19,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run refresh:problems
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
       - name: Save updated catalog
         run: |
           if ! git diff --quiet -- public/problems; then
@@ -34,5 +37,6 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            npm run db:remote
             npm run deploy
           fi

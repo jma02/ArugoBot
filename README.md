@@ -186,6 +186,26 @@ globally. The script replaces this application's commands in the selected scope.
 Use a separate Discord application for development if you already run ArugoBot
 in production.
 
+### Automatic deployments
+
+On each push to `main`, GitHub Actions runs the type checks, tests, and build.
+Only if they pass does it apply any pending D1 migrations and deploy the Worker.
+Pull requests run checks but never deploy. To enable deployment, open
+[Cloudflare Account API tokens](https://dash.cloudflare.com/?to=/:account/api-tokens),
+select **Create Token**, choose **Edit Cloudflare Workers**, and add **D1: Edit**
+and **Queues: Edit** permissions for the account hosting ArugoBot. Then add
+these **repository secrets** under
+**Settings -> Secrets and variables -> Actions** on your GitHub fork:
+
+- `CLOUDFLARE_API_TOKEN`: the Cloudflare API token (not the Discord bot token).
+- `CLOUDFLARE_ACCOUNT_ID`: the Cloudflare account hosting the Worker.
+
+The account ID is not sensitive, but the API token must stay out of Git and chat.
+The Discord values remain in Cloudflare Worker secrets; GitHub does not need
+them. Until both GitHub secrets are set, the deploy job fails with an actionable
+error rather than reporting a successful deployment. The scheduled catalog
+refresh uses the same credentials and checks its changes before deploying.
+
 ## How it runs without an always-on bot
 
 ```text
@@ -260,11 +280,10 @@ npm run deploy
 
 The **Refresh Codeforces problems** GitHub workflow refreshes the catalog daily
 and commits changes to the fork. Enable Actions on your fork if GitHub has
-disabled inherited workflows. Without deployment credentials, the workflow
-updates the repository only. To deploy updates automatically, add repository
-secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` with the Worker deployment,
-D1, Queues, and account-read permissions needed by Wrangler. The Discord bot
-token stays in Cloudflare.
+disabled inherited workflows. Without the GitHub secrets described under
+**Automatic deployments**, the workflow updates the repository only. Commits
+made by the workflow do not trigger the push workflow, so it deploys catalog
+updates itself when credentials are available.
 
 ## Development and verification
 
@@ -301,9 +320,10 @@ npx wrangler d1 export DB --remote --output arugobot-backup.sql
 ```
 
 Keep database backups private: they contain Discord IDs and Codeforces handles.
-To update the application, apply pending migrations with `npm run db:remote`,
-then run `npm run deploy`. Queued and active challenges are stored outside the
-Worker and survive routine code deployments.
+Pushing to `main` automatically applies pending migrations and deploys if the
+GitHub secrets are configured. For manual updates, apply pending migrations with
+`npm run db:remote`, then run `npm run deploy`. Queued and active challenges are
+stored outside the Worker and survive routine code deployments.
 
 If `/ping` works but Codeforces operations fail, inspect the Worker logs. A
 Codeforces outage, rate limit, or restriction on the hosting provider's IPs
