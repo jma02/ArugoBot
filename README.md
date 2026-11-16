@@ -22,6 +22,8 @@ buttons, a persistent D1 database, and short scheduled jobs.
 
 Selecting a problem by rating with `/suggest` or `/challenge` favors newer
 Codeforces contests. Older eligible problems still have a chance to be selected.
+Problem titles and linked Codeforces statements are requested in English.
+Problems without English titles are omitted from the selectable catalog.
 
 New users start at **1500**. Challenges last **40, 60, 80, 100, or 120 minutes**.
 Everyone has 30 seconds to confirm with the **Ready** button. Players can give

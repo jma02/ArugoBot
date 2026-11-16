@@ -180,7 +180,7 @@ export function problemParts(id: string): { contestId: number; index: string } {
 
 export function problemUrl(id: string): string {
   const { contestId, index } = problemParts(id);
-  return `https://codeforces.com/problemset/problem/${contestId}/${index}`;
+  return `https://codeforces.com/problemset/problem/${contestId}/${index}?locale=en`;
 }
 
 export function escapeMarkdown(text: string): string {

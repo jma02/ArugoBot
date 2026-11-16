@@ -11,7 +11,7 @@ interface CFProblem {
 }
 
 const directory = fileURLToPath(new URL("../public/problems/", import.meta.url));
-const response = await fetch("https://codeforces.com/api/problemset.problems", {
+const response = await fetch("https://codeforces.com/api/problemset.problems?lang=en", {
   signal: AbortSignal.timeout(30_000),
 });
 if (!response.ok) throw new Error(`Codeforces returned HTTP ${response.status}; existing catalog was kept.`);
@@ -24,6 +24,8 @@ for (let rating = 800; rating <= 3500; rating += 100) buckets[rating] = [];
 const index: Record<string, number> = {};
 for (const problem of data.result.problems) {
   if (!problem.contestId || !problem.rating || !buckets[problem.rating] || problem.tags.includes("*special")) continue;
+  // Some problems still have Russian titles when Codeforces is asked for English.
+  if (/\p{Script=Cyrillic}/u.test(problem.name)) continue;
   const id = `${problem.contestId}${problem.index}`;
   buckets[problem.rating]!.push({
     id, contestId: problem.contestId, index: problem.index, name: problem.name, rating: problem.rating,

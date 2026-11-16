@@ -4,6 +4,7 @@ import { Catalog, sample, sampleRecentProblems } from "../src/catalog";
 import { ratingChart } from "../src/chart";
 import { COMMANDS } from "../src/command-schema";
 import { ratingChanges } from "../src/rating";
+import { problemUrl } from "../src/types";
 
 describe("original ArugoBot ratings", () => {
   // Golden values evaluated from upstream's Python formula.
@@ -49,11 +50,19 @@ it("handles a new user's graph without dividing by zero", async () => {
 it("loads an actual problem from the bundled Codeforces catalog", async () => {
   const catalog = new Catalog(env.ASSETS);
   expect((await catalog.problem("1000a")).id).toBe("1000A");
+  expect((await catalog.problem("4a")).name).toBe("Watermelon");
+  expect(problemUrl("4A")).toBe("https://codeforces.com/problemset/problem/4/A?locale=en");
   const bucket = await catalog.bucket(1500);
   expect(bucket.length).toBeGreaterThan(10);
   expect(bucket.every((problem) => problem.rating === 1500)).toBe(true);
   await expect(catalog.bucket(1550)).rejects.toThrow("steps of 100");
   await expect(catalog.problem("not-a-problem")).rejects.toThrow("not in the catalog");
+});
+
+it("keeps Russian-only problem titles out of the catalog", async () => {
+  const catalog = new Catalog(env.ASSETS);
+  const buckets = await Promise.all(Array.from({ length: 28 }, (_, index) => catalog.bucket(800 + index * 100)));
+  expect(buckets.flat().every((problem) => !/\p{Script=Cyrillic}/u.test(problem.name))).toBe(true);
 });
 
 it("samples small suggestion pools without duplicates or mutating the source", () => {
